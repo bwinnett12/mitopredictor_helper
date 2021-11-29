@@ -1,0 +1,49 @@
+#!/bin/bash
+
+## Fetching requirements
+# Proteinortho v5.16b
+wget https://www.bioinf.uni-leipzig.de/Software/proteinortho/proteinortho_v5.16b.tar.gz 
+
+# TargetP v1.1
+
+# MitoFates
+wget http://mitf.cbrc.jp/MitoFates/program/MitoFates_1.2.tar.gz
+
+# CD-hit
+#git clone https://github.com/weizhongli/cdhit.git
+#cd cdhit/
+#make
+#cd ../
+
+## Pfam libraries
+# First retrieve
+wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz
+wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz
+wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz
+
+# Then create binary files
+module load hmmer
+hmmpress Pfam-A.hmm
+
+## Now to run the actual program
+# Runs step 1 - Prep file for analysis
+bash ./step1_prep.bash
+echo "Step 1 complete"
+
+# Runs step 2, 3, 4 in parallel
+bash ./step2_ortho.bash && echo "Step 2 Complete: Find Orthologous Groups using ProteinOrtho" &
+bash ./step3_mts.bash && echo "Step 3 Complete: Find Proteins with MTS" &
+bash ./step4_domain.bash && echo "Step 4 Complete: Protein domain analysis for identification of mt-proteins" &
+
+wait
+echo "Steps 2, 3, 4: Complete"
+
+# Runs step 5 - Identify mt-proteins
+bash ./step5_identify_and_concat.bash && echo "Step 5 Complete: Identify mt-proteins"
+
+# Runs step 6 - Make basic statistics of the inferred mt-proteome
+bash ./step6_make_stats.bash && echo "Step 6 Complete: Make basic statistics"
+
+# Runs step 7 - Cleans intermediate files and prepares mitopredictor for next analysis
+bash ./step7_clean.bash && echo "Step 7 Complete: Clean up Mitopredictor"
+
